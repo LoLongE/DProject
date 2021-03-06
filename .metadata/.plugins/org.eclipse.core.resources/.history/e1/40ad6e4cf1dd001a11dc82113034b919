@@ -1,0 +1,8 @@
+package com.polarisoffice.support.mornitoring;
+
+import com.polarisoffice.support.account.AccountResponse;
+
+public interface MornitoringService {
+
+	public void redisMornitoring( String userId ) throws Exception;
+}

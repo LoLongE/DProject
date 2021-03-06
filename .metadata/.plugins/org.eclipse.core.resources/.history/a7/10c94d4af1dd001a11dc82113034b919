@@ -1,0 +1,6 @@
+package com.polarisoffice.support.mornitoring;
+
+public interface MornitoringService {
+
+	
+}

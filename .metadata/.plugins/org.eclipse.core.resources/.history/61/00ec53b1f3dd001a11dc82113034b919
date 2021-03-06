@@ -1,0 +1,18 @@
+package com.polarisoffice.support.mornitoring;
+
+import javax.annotation.Resource;
+import javax.servlet.http.HttpServletRequest;
+
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.RequestMapping;
+
+public class MornitoringController {
+	
+	@Resource(name="mornitoringService")
+    private MornitoringService mornitoringService;
+	
+	@RequestMapping(value="/getWasMornitoringInfo.do")
+    public String getWasMornitoring(Model model, HttpServletRequest request) throws Exception {
+		mornitoringService.getWasMornitoringInfo()
+	}
+}

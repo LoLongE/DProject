@@ -1,0 +1,26 @@
+package com.polarisoffice.support.mornitoring;
+
+import org.springframework.stereotype.Service;
+
+@Service
+public class MornitoringServiceImpl implements MornitoringService {
+
+	@Override
+	public String getWasMornitoringInfo() throws Exception {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public String getRedisMornitoringInfo() throws Exception {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public String getMemcachedMornitoringInfo() throws Exception {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+}

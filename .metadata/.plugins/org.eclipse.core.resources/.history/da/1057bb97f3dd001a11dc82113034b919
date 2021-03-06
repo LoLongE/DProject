@@ -1,0 +1,15 @@
+package com.polarisoffice.support.mornitoring;
+
+import javax.annotation.Resource;
+
+public class MornitoringController {
+	
+	@Resource(name="mornitoringService")
+    private MornitoringService mornitoringService;
+	
+	@RequestMapping(value="/getWasMornitoring.do")
+    public String getWasMornitoring(Model model, HttpServletRequest request,
+            @ModelAttribute("dprkDailyNoteVO") DprkDailyNoteVO dprkDailyNoteVO,
+           ) throws Exception
+    {
+}

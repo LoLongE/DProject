@@ -1,0 +1,25 @@
+package com.polarisoffice.support.wp.account;
+
+import java.util.List;
+//import java.util.Set;
+
+import com.polarisoffice.support.wp.account.domain.User;
+import com.polarisoffice.support.wp.account.domain.UserDept;
+
+public interface AccountService {
+
+	public AccountResponse accountByEmpno( String empno ) throws Exception;
+
+	public List<UserDept> getUsersByTeamSeq( String orgCode ) throws Exception;
+
+	public List<User> getUsersByOrgCode( String orgCode ) throws Exception;
+
+	public List<User> getAllUsersByOrgCode( String orgCode ) throws Exception;
+
+	public AccountAuthCheckResponse checkAccountAuth( String id, String pw ) throws Exception;
+
+	public List<User> getSearchUserByName( String name ) throws Exception;
+
+	public User getUserByEmpNo( String empno );
+
+}

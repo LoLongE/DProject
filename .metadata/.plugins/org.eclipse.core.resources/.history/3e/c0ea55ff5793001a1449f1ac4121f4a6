@@ -1,0 +1,213 @@
+package com.polarisoffice.support.wp.notify;
+
+import java.io.File;
+import java.nio.file.Files;
+import java.util.HashSet;
+import java.util.Set;
+
+import javax.mail.internet.MimeMessage;
+
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.ClassPathResource;
+import org.springframework.mail.javamail.JavaMailSender;
+import org.springframework.mail.javamail.MimeMessageHelper;
+import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
+
+import com.polarisoffice.support.wp.account.domain.User;
+import com.polarisoffice.support.wp.account.repository.UserRepository;
+import com.polarisoffice.support.wp.message.MessageSender;
+import com.polarisoffice.support.wp.sms.SmsSender;
+
+@Service
+public class NotifyServiceImpl implements NotifyService {
+
+	protected Log logger = LogFactory.getLog( getClass() );
+
+	private static final String DOCLINK = "docLink";
+
+	private static final String LINKMSG = "linkmsg";
+
+	@Value( "${com.polarisoffice.support.wp.notify.NotifyServiceImpl.mailSubject}" )
+	private String mailSubject;
+
+	@Value( "${com.polarisoffice.support.wp.notify.NotifyServiceImpl.mailContent}" )
+	private String mailContent;
+
+	@Value( "${com.polarisoffice.support.wp.notify.NotifyServiceImpl.defaultMailSender}" )
+	private String defaultMailSender;
+
+	@Value( "${com.polarisoffice.support.wp.notify.NotifyServiceImpl.smsContent}" )
+	private String smsContent;
+
+	@Value( "${com.polarisoffice.support.wp.notify.NotifyServiceImpl.defaultSmsSender}" )
+	private String defaultSmsSender;
+
+	@Value( "${com.polarisoffice.support.wp.notify.NotifyServiceImpl.mailDomain}" )
+	private String mailDomain;
+
+	private @Autowired JavaMailSender mailSender;
+
+	private @Autowired SmsSender wpSmsSender;
+
+	private @Autowired MessageSender wpMessageSender;
+
+	private @Autowired UserRepository userRepository;
+
+	@Override
+	public NotifyResponse sendMail( final String sender, final String receiver, final String docLink, final String fileName, final String linkmsg, final String fileType ) throws Exception {
+
+		this.logger.info( "----------------------------------------------------------------------" );
+		this.logger.info( "sender: " + sender );
+		this.logger.info( "receiver: " + receiver );
+		this.logger.info( "docLink: " + docLink );
+		this.logger.info( "fileName: " + fileName );
+		this.logger.info( "linkmsg: " + linkmsg );
+		this.logger.info( "fileType: " + fileType );
+
+		final ClassPathResource resourcePath = new ClassPathResource( "mail-template.html" );
+		final File resource = resourcePath.getFile();
+		String mailContent = new String( Files.readAllBytes( resource.toPath() ) );
+
+		final User fromUser = this.userRepository.findOne( sender );
+		if ( fromUser != null ) {
+			String from = fromUser.getEmail() + this.mailDomain;
+			if ( StringUtils.isEmpty( from ) ) {
+				from = this.defaultMailSender;
+			}
+
+			mailContent = mailContent.replace( "${fileName}", fileName ).replace( "${sender}", fromUser.getNameHan() ).replace( "${startAppUrl}", docLink ).replace( "${msg}", linkmsg );
+
+			final Set<String> toSet = new HashSet<String>();
+			final String[] receivers = StringUtils.commaDelimitedListToStringArray( receiver );
+			for ( final String r : receivers ) {
+				final User toUser = this.userRepository.findOne( r );
+				if ( ( toUser != null ) && !StringUtils.isEmpty( toUser.getEmail() ) ) {
+					toSet.add( toUser.getEmail() + this.mailDomain );
+				}
+			}
+			final String[] to = toSet.toArray( new String[toSet.size()] );
+			//			final String text = this.mailContent.replaceAll( DOCLINK, docLink ).replaceAll( LINKMSG, linkmsg );
+
+			this.logger.info( "FROM: " + from );
+			for ( final String t : to ) {
+				this.logger.info( "TO: " + t );
+			}
+			//			this.logger.info( "MESSAGE: " + text );
+			this.logger.info( "MESSAGE: " + mailContent );
+
+			if ( StringUtils.isEmpty( from ) || ( to.length == 0 ) ) {
+				this.logger.info( "----------------------------------------------------------------------" );
+				throw new Exception( "StringUtils.isEmpty(from) || to.length == 0" );
+			}
+
+			final MimeMessage message = this.mailSender.createMimeMessage();
+
+			final MimeMessageHelper messageHelper = new MimeMessageHelper( message );
+			messageHelper.setFrom( from );
+			messageHelper.setTo( to );
+			messageHelper.setSubject( this.mailSubject );
+			messageHelper.setText( mailContent, true );
+			this.mailSender.send( message );
+
+			this.logger.info( "sendMail" );
+			this.logger.info( "----------------------------------------------------------------------" );
+
+			return new NotifyResponse( from, to );
+		}
+		return null;
+	}
+
+	@Override
+	public NotifyResponse sendSms( final String sender, final String receiver, final String fileName, final String fileType ) throws Exception {
+
+		this.logger.info( "----------------------------------------------------------------------" );
+		this.logger.info( "sender: " + sender );
+		this.logger.info( "receiver: " + receiver );
+		this.logger.info( "fileName: " + fileName );
+
+		String linkmsg = "";
+		if ( fileName.length() > 40 ) {
+			linkmsg = fileName.substring( 0, 35 ) + "..." + " 문서를 공유하였습니다.";
+		} else {
+			linkmsg = fileName + " 문서를 공유하였습니다.";
+		}
+
+		final User fromUser = this.userRepository.findOne( sender );
+		if ( fromUser != null ) {
+			String from = fromUser.getMobilePhone();
+			if ( StringUtils.isEmpty( from ) ) {
+				from = this.defaultSmsSender;
+			}
+
+			this.logger.info( "FROM: " + from );
+
+			final Set<String> toSet = new HashSet<String>();
+			final String[] receivers = StringUtils.commaDelimitedListToStringArray( receiver );
+			for ( final String r : receivers ) {
+				final User toUser = this.userRepository.findOne( r );
+				if ( ( toUser != null ) && !StringUtils.isEmpty( toUser.getMobilePhone() ) ) {
+					final String phone = toUser.getMobilePhone().replaceAll( "[^0-9]", "" );
+					if ( !StringUtils.isEmpty( phone ) ) {
+						toSet.add( phone );
+						this.logger.info( "TO: " + phone );
+						final String text = fromUser.getNameHan() + "님이 " + toUser.getNameHan() + "님에게 " + linkmsg;
+						this.logger.info( "MESSAGE: " + text );
+						this.wpSmsSender.send( sender, from, phone, toUser.getNameHan(), text );
+					}
+				}
+			}
+
+			if ( StringUtils.isEmpty( from ) || ( toSet.size() == 0 ) ) {
+				this.logger.info( "----------------------------------------------------------------------" );
+				throw new Exception( "StringUtils.isEmpty(from) || toSet.size()== 0" );
+			}
+
+			//			this.logger.info( "sendSms" );
+			this.logger.info( "----------------------------------------------------------------------" );
+
+			return new NotifyResponse( from, toSet.toArray( new String[toSet.size()] ) );
+		}
+		return null;
+	}
+
+	@Override
+	public NotifyResponse sendMessage( final String sender, final String receiver, final String docLink, final String fileName, final String fileType ) throws Exception {
+
+		this.logger.info( "----------------------------------------------------------------------" );
+		this.logger.info( "Message sender: " + sender );
+		this.logger.info( "Message receiver: " + receiver );
+		this.logger.info( "Message fileName: " + fileName );
+
+		final User fromUser = this.userRepository.findOne( sender );
+		if ( fromUser != null ) {
+			final String from = fromUser.getNameHan();
+
+			this.logger.info( "FROM: " + from );
+
+			final Set<String> toSet = new HashSet<String>();
+			final String[] receivers = StringUtils.commaDelimitedListToStringArray( receiver );
+			for ( final String r : receivers ) {
+				final User toUser = this.userRepository.findOne( r );
+				if ( ( toUser != null ) && !StringUtils.isEmpty( toUser.getSabun() ) ) {
+					toSet.add( toUser.getSabun() );
+					this.wpMessageSender.send( from, toUser.getSabun(), fileName + " 문서가 공유 되었습니다.", docLink );
+				}
+			}
+
+			if ( StringUtils.isEmpty( from ) || ( toSet.size() == 0 ) ) {
+				this.logger.info( "----------------------------------------------------------------------" );
+				throw new Exception( "StringUtils.isEmpty(from) || toSet.size()== 0" );
+			}
+
+			this.logger.info( "----------------------------------------------------------------------" );
+
+			return new NotifyResponse( from, toSet.toArray( new String[toSet.size()] ) );
+		}
+		return null;
+	}
+
+}

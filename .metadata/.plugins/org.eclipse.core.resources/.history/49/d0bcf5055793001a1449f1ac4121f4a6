@@ -1,0 +1,11 @@
+package com.polarisoffice.support.wp.notify;
+
+public interface NotifyService {
+
+	NotifyResponse sendMail( String sender, String receiver, String docLink, String fileName, String linkmsg ) throws Exception;
+
+	NotifyResponse sendSms( String sender, String receiver, String fileName ) throws Exception;
+
+	NotifyResponse sendMessage( String sender, String receiver, String docLink, String fileName ) throws Exception;
+
+}

@@ -1,0 +1,12 @@
+package com.polarisoffice.support.mornitoring;
+
+public interface MornitoringService {
+
+	public void getWasMornitoringInfo() throws Exception;
+	
+	public void getWebMornitoringInfo() throws Exception;
+	
+	public void getRedisMornitoringInfo() throws Exception;
+	
+	public void getMemcachedMornitoringInfo() throws Exception;
+}

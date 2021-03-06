@@ -1,0 +1,117 @@
+package com.polarisoffice.support.wp.account;
+
+import java.io.UnsupportedEncodingException;
+import java.util.List;
+
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Service;
+
+import com.polarisoffice.support.wp.account.WPAuthAPI.AuthResult;
+import com.polarisoffice.support.wp.account.domain.User;
+import com.polarisoffice.support.wp.account.domain.UserDept;
+import com.polarisoffice.support.wp.account.repository.UserDeptRepository;
+import com.polarisoffice.support.wp.account.repository.UserRepository;
+import com.polarisoffice.support.wp.polaris.Account;
+import com.polarisoffice.support.wp.polaris.AccountTemplate;
+
+@Service
+public class AccountServiceImpl implements AccountService {
+
+	protected Log logger = LogFactory.getLog( getClass() );
+
+	private @Autowired AccountTemplate accountTemplate;
+
+	private @Autowired UserRepository userRepository;
+
+	private @Autowired UserDeptRepository userDeptRepository;
+
+	@Value( "${com.polarisoffice.support.wp.polaris.AccountServiceImpl.clientid}" )
+	private String clientid;
+
+	@Value( "${com.polarisoffice.support.wp.polaris.AccountServiceImpl.sharedkey}" )
+	private String sharedkey;
+
+	@Override
+	public AccountResponse accountByEmpno( final String empno ) throws Exception {
+		final User user = this.userRepository.findOne( empno );
+		if ( user == null ) {
+			return new AccountResponse();
+		}
+		
+		final String email = user.getSabun() + "@iwest.co.kr";
+		final String password = user.getSabun();
+		final String firstName = user.getSabun();
+		final String lastName = user.getNameHan();
+
+		final AccountResponse loginForm = new AccountResponse();
+		loginForm.setAutoLogin( false );
+		loginForm.setEmail( email );
+		loginForm.setPassword( password );
+
+		final Account.Isexist.Req q1 = new Account.Isexist.Req( email );
+		final Account.Isexist.Res s1 = this.accountTemplate.execute( q1 );
+
+		if ( s1.getExist() ) {
+			loginForm.setAutoLogin( true );
+
+		} else {
+			final Account.Regist.Req q2 = new Account.Regist.Req();
+			q2.setEmail( email );
+			q2.setPassword( password );
+			q2.setFirstName( firstName );
+			q2.setLastName( lastName );
+
+			final Account.Regist.Res r2 = this.accountTemplate.execute( q2 );
+			loginForm.setAutoLogin( r2.getResultCode() == 0 );
+		}
+		return loginForm;
+	}
+
+	@Override
+	public List<UserDept> getUsersByTeamSeq( final String orgCode ) throws Exception {
+		return this.userDeptRepository.findByDirOrgSort( orgCode );
+	}
+
+	@Override
+	public List<User> getUsersByOrgCode( final String orgCode ) throws Exception {
+		return this.userRepository.findByOrgCodeCustomQuery( orgCode );
+	}
+
+	@Override
+	public List<User> getAllUsersByOrgCode( final String orgCode ) throws Exception {
+		return this.userRepository.findByOrgCodeCustomQuery2( orgCode );
+	}
+
+	@Override
+	public AccountAuthCheckResponse checkAccountAuth( final String id, final String pw ) throws UnsupportedEncodingException {
+		final AccountAuthCheckResponse response = new AccountAuthCheckResponse();
+
+		//final String password = new String( Base64.decodeBase64( pw.getBytes() ) );
+		final WPAuthAPI authAPI = new WPAuthAPI( this.clientid, this.sharedkey );
+
+		this.logger.info( "----------------------------------------------------------------------" );
+		this.logger.info( " id : " + id );
+
+		final AuthResult result = authAPI.AuthenticateV2( id, pw );
+		this.logger.info( " code : " + result.getCode() );
+		this.logger.info( " message : " + result.getMessage() );
+		this.logger.info( "----------------------------------------------------------------------" );
+
+		response.setCode( result.getCode() );
+		response.setMessage( result.getMessage() );
+		return response;
+	}
+
+	@Override
+	public List<User> getSearchUserByName( final String name ) throws Exception {
+		return this.userRepository.findByNameLike( name );
+	}
+
+	@Override
+	public User getUserByEmpNo( final String empno ) {
+		return this.userRepository.findOne( empno );
+	}
+}

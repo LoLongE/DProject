@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<aop-reference-model>
+<aop-project name="com.polarisoffice.support.mnd"/>
+<aop-project name="CE-Converter"/>
+<aop-project name="PolarisCloudUpDownLoader"/>
+</aop-reference-model>

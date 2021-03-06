@@ -1,0 +1,6 @@
+package com.polarisoffice.support.mornitoring;
+
+@Service
+public class MornitoringServiceImpl implements MornitoringService {
+
+}

@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<session version="1.0">
+<refactoring accessors="true" comment="Delete element from project &apos;com.polarisoffice.support.mnd&apos;&#x0D;&#x0A;- Original project: &apos;com.polarisoffice.support.mnd&apos;&#x0D;&#x0A;- Original element: &apos;com.polarisoffice.support.mnd/src/main/java/com.polarisoffice.support.notify&apos;" description="Delete element" element1="/src\/main\/java&lt;com.polarisoffice.support.notify" elements="1" flags="589830" id="org.eclipse.jdt.ui.delete" resources="0" stamp="1591869197117" subPackages="false" version="1.0"/>
+</session>

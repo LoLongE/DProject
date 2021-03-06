@@ -1,0 +1,29 @@
+package com.polarisoffice.support.account.domain;
+
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.Id;
+import javax.persistence.Table;
+
+import lombok.Data;
+
+@Data
+@Entity
+public @Table( name = "VIEW_USER_INFO" ) class User {
+
+	@Id
+	private @Column( name = "SYSTEM_USER_ID" ) String sabun;
+	
+	//이름
+	private @Column( name = "USER_HANGL_FULNM" ) String nameHan;							
+	
+	//부서이름
+	private @Column( name = "DEPT_NM" ) String deptNm;
+	
+	//부대부서이름
+	//private @Column( name = "UNIT_NM" ) String unitNm;
+	
+	//부대부서코드
+	//private @Column( name = "UNITDPCD_DEPT_NM" ) String unitdpcdDeptNm;
+	
+}

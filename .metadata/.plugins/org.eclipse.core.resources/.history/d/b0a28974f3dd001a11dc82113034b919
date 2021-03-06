@@ -1,0 +1,8 @@
+package com.polarisoffice.support.mornitoring;
+
+public class MornitoringController {
+	
+	@Resource(name="DprkDailyNoteService")
+    private MornitoringService mornitoringService;
+	
+}

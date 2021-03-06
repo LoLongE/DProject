@@ -1,0 +1,322 @@
+package com.polarisoffice.support.wp.account;
+
+import java.io.StringReader;
+/*************************************************************************
+
+	   서부발전 사용자인증 API ver 1.2
+
+ 요청 : http://winers.iwest.co.kr/irj/servlet/prt/portal/prtroot/portal.certify.logon.AuthUser?client=101&id=04160258&rand=120614043W6r4We5Zm&auth=PysEbz9XZCo1OyaXYivs8R3gdDoyipIWvyDxUs7fOEE=
+        (아래 구현은 POST 방식임)
+ 응답 :
+  <?xml version="1.0" encoding="utf-8" ?>
+  <auth>
+  <code>000</code>
+  <message>성공</message>
+  <response>+zuywaCYcuSCsSLcPVhnSFZtYuUZMW20aN7198bHOnU=</response>
+  </auth>
+
+**************************************************************************/
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.Random;
+
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+
+import org.apache.commons.codec.binary.Base64;
+import org.apache.commons.httpclient.HttpClient;
+import org.apache.commons.httpclient.methods.PostMethod;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+import org.w3c.dom.Document;
+import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
+import org.xml.sax.InputSource;
+
+import com.ksign.securedb.api.SDBCrypto;
+
+public class WPAuthAPI {
+
+	protected Log logger = LogFactory.getLog( getClass() );
+
+	private String Nonce; // rand = 랜덤 넘버
+
+	public String ClientId = null; // client = 클라이언트 구별 및 공유키를 구분하는데 이용
+
+	public String UserId = null; // id = 직원 아이디
+
+	private String SharedKey = null; // 서버_클라이언트_공유키 = 서버와 클라이언트 사이에 서로 공유하는 비밀키(Secret)
+
+	class AuthResult {
+
+		public String getCode() {
+			return this.code;
+		}
+
+		public void setCode( final String code ) {
+			this.code = code;
+		}
+
+		public String getMessage() {
+			return this.message;
+		}
+
+		public void setMessage( final String message ) {
+			this.message = message;
+		}
+
+		String code = "";
+
+		String message = "";
+
+	}
+
+	/*************************************************************************
+	Function AuthAPI(클라이언트 ID, 인증서버와 클라이언트 간 공유키)
+	**************************************************************************/
+	public WPAuthAPI( final String clientid, final String sharedkey ) {
+		this.ClientId = clientid;
+		this.SharedKey = sharedkey;
+	}
+
+	/*************************************************************************
+	Function Authenticate(사용자 사번, 사용자 패스워드)
+	**************************************************************************/
+	public int Authenticate( final String userid, final String UserPassword ) {
+		this.UserId = userid;
+
+		if ( this.ClientId == null ) {
+			return -1;
+		}
+		if ( this.SharedKey == null ) {
+			return -1;
+		}
+
+		// 1.랜덤 넘버 생성
+		this.Nonce = RandomValue();
+		this.logger.debug( "DEBUG : random = " + this.Nonce );
+
+		// 2.패스워드 암호화
+		final String auth = EncryptPassword( UserPassword, this.SharedKey, this.Nonce );
+		this.logger.debug( "DEBUG : auth = " + auth );
+
+		// 3. 인증서버 호출
+		final String xmlresult = CAllAuthServer( auth );
+
+		// 4. 결과 파싱 및 서버 무결성 체크
+		final String code = parseXmlFromString( xmlresult, "code" );
+		final String response = parseXmlFromString( xmlresult, "response" );
+		final String ExpectedResponse = GetResponse( code/*"000"*/, this.SharedKey, this.Nonce );
+		if ( !response.equals( ExpectedResponse ) ) {
+			this.logger.error( "ERROR : Should Check If Auth-Server is Trusty" );
+			return -1;
+		}
+
+		//	System.out.println("DEBUG : code = " + code);
+		//	System.out.println("DEBUG : result = " + parseXmlFromString(xmlresult,"message"));
+
+		//	System.out.println("DEBUG : expected response = = " + ExpectedResponse);
+		if ( code.equals( "000" ) ) {
+			return 0;
+		} else if ( code.equals( "001" ) ) {
+			return 1;
+		} else if ( code.equals( "002" ) ) {
+			return 2;
+		} else if ( code.equals( "003" ) ) {
+			return 3;
+		} else if ( code.equals( "004" ) ) {
+			return 4;
+		} else {
+			return -1;
+		}
+	}
+
+	public AuthResult AuthenticateV2( final String userid, final String UserPassword ) {
+		final AuthResult result = new AuthResult();
+		this.UserId = userid;
+
+		if ( this.ClientId == null ) {
+			return result;
+		}
+		if ( this.SharedKey == null ) {
+			return result;
+		}
+
+		// 1.랜덤 넘버 생성
+		this.Nonce = RandomValue();
+		this.logger.debug( "DEBUG : random = " + this.Nonce );
+
+		// 2.패스워드 암호화
+		final String auth = EncryptPassword( UserPassword, this.SharedKey, this.Nonce );
+		this.logger.debug( "DEBUG : auth = " + auth );
+
+		// 3. 인증서버 호출
+		final String xmlresult = CAllAuthServer( auth );
+
+		// 4. 결과 파싱 및 서버 무결성 체크
+		final String code = parseXmlFromString( xmlresult, "code" );
+		final String response = parseXmlFromString( xmlresult, "response" );
+		final String ExpectedResponse = GetResponse( code/*"000"*/, this.SharedKey, this.Nonce );
+		if ( !response.equals( ExpectedResponse ) ) {
+			this.logger.error( "ERROR : Should Check If Auth-Server is Trusty" );
+			return result;
+		}
+
+		final String message = parseXmlFromString( xmlresult, "message" );
+
+		result.setCode( code );
+		result.setMessage( message );
+		return result;
+	}
+
+	public String parseXmlFromString( final String xmlStr, final String name ) {
+		Node textNode = null;
+
+		try {
+			final DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+			final DocumentBuilder builder = factory.newDocumentBuilder();
+			final Document document = builder.parse( new InputSource( new StringReader( xmlStr.toString() ) ) );
+
+			final NodeList nodelist = document.getElementsByTagName( name/*"status"*/ );
+			final Node node = nodelist.item( 0 );
+			textNode = nodelist.item( 0 ).getChildNodes().item( 0 );
+		} catch ( final Exception e ) {
+			//e.printStackTrace();
+			return "empty";
+		}
+
+		return textNode.getNodeValue();
+	}
+
+	/*************************************************************************
+	Function RandomValue // 18 바이트 랜덤 넘버 생성 함수
+	**************************************************************************/
+	public String RandomValue() {
+		final char[] charaters = {
+				'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9'
+		};
+		final int length = 10;
+
+		final StringBuffer sb = new StringBuffer();
+		final Random rn = new Random();
+		for ( int i = 0; i < length; i++ ) {
+			sb.append( charaters[rn.nextInt( charaters.length )] );
+		}
+
+		final DateFormat dateFormat = new SimpleDateFormat( "MMddHHmm" );
+		final Date date = new Date();
+
+		return dateFormat.format( date ) + sb.toString();
+	}
+
+	/*************************************************************************
+	Function EncryptPassword(패스워드,서버_클라이언트_공유키,rand) {
+		패스워드 XOR SHA-256(서버_클라이언트_공유키 + rand)
+	      // password 최종 표현은 16진수 표기,  + 는 Concatenate(단순 붙임)
+	}
+	**************************************************************************/
+	public String EncryptPassword( final String password, final String sharedKey, final String rand ) {
+		SDBCrypto crypto = null;
+		String hashString = "";
+		String cipherTextSha256 = "";
+		String authxor = "";
+
+		//서버_클라이언트_공유키 + rand
+		hashString = sharedKey + rand;
+
+		//SHA256 변환
+		crypto = SDBCrypto.getInstance();
+		cipherTextSha256 = crypto.encryptSHA256( hashString );
+
+		// XOR and Base64 인코딩
+		authxor = new String( Base64.encodeBase64( XorCalculater( password, cipherTextSha256 ) ) );
+
+		return authxor;
+	}
+
+	public String CAllAuthServer( final String auth ) /*throws Exception*/ {
+		final String AuthURL = "http://winers.iwest.co.kr/irj/servlet/prt/portal/prtroot/portal.certify.logon.AuthUser";
+
+		HttpClient httpclient = null;
+		PostMethod method = null;
+		String result = "<?xml version=\"1.0\" encoding=\"euc-kr\"?><auth></auth>";
+
+		try {
+			/// 참고!!
+			//// 1. GET 방식으로 전송시
+			///     base64 인코딩된 문자열 중에 '+' 문자를 %2B로 치환이 필수 (C 코드 참조)
+			///  2. POST 방식으로 전송시
+			///     아래 처럼 PostMethod(..) 일때는 필요 없음
+
+			// 요청 URL 생성
+			httpclient = new HttpClient();
+			method = new PostMethod( AuthURL );
+			method.addParameter( "client", this.ClientId );
+			method.addParameter( "id", this.UserId );
+			method.addParameter( "rand", this.Nonce );
+			method.addParameter( "auth", auth );
+
+			//	System.out.println("DEBUG : URL = " + AuthURL+"?client="+ClientId+"&id="+UserId+"&rand="+Nonce+"&auth="+auth);
+
+			final int rtn = httpclient.executeMethod( method );
+			if ( rtn > 0 ) {
+				result = method.getResponseBodyAsString();
+			}
+
+		} catch ( final Exception e ) {
+			this.logger.error( "ERROR : Can't Connect Auth-Server" );
+			//e.printStackTrace();
+		} finally {
+			method.releaseConnection();
+		}
+		//	System.out.println("DEBUG : HTTP Response = " + result);
+		return result;
+	}
+
+	/************************************************************************
+	Function GetResponse(에러코드,서버_클라이언트_공유키,rand) {
+		SHA-256(에러코드 + 서버_클라이언트_공유키 + rand)
+	}
+	************************************************************************/
+	public String GetResponse( final String code, final String sharedKey, final String rand ) {
+		SDBCrypto crypto = null;
+		String hashString = "";
+		String cipherTextSha256 = "";
+		String b64str = "";
+
+		hashString = code + sharedKey + rand;
+
+		crypto = SDBCrypto.getInstance();
+		cipherTextSha256 = crypto.encryptSHA256( hashString );
+
+		final byte[] bcipherTextSha256 = Base64.decodeBase64( cipherTextSha256.getBytes() );
+		b64str = new String( Base64.encodeBase64( bcipherTextSha256 ) );
+
+		return b64str;
+	}
+
+	public static byte[] XorCalculater( final String enBase64key, final String enPasswd ) throws ArrayIndexOutOfBoundsException {
+
+		final byte[] imsi = enBase64key.getBytes();
+		final byte[] deBase64Key = new byte[32];
+
+		final byte[] cnvPasswd = Base64.decodeBase64( enPasswd.getBytes() );
+		final byte[] rtnPasswd = Base64.decodeBase64( enPasswd.getBytes() );
+
+		try {
+			for ( int i = 0; i < imsi.length; i++ ) {
+				deBase64Key[i] = imsi[i];
+			}
+
+			for ( int i = 0; i < cnvPasswd.length; i++ ) {
+				rtnPasswd[i] = (byte) ( cnvPasswd[i] ^ deBase64Key[i] );
+			}
+		} catch ( final ArrayIndexOutOfBoundsException ex ) {
+			ex.printStackTrace();
+		}
+
+		return rtnPasswd;
+	}
+
+}

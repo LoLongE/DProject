@@ -1,0 +1,9 @@
+package com.polarisoffice.support.mornitoring;
+
+public class Mornitoring {
+
+	public Map execCommand() {
+		Map<Integer, String> map = new HashMap<>();
+		
+	}
+}

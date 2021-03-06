@@ -1,0 +1,66 @@
+
+<html>
+<head>
+<meta charset="utf-8">
+<title>파일명, 확장자의 링크를 공유하였습니다.</title>
+</head>
+
+<body>
+<table cellpadding="0" cellspacing="0" border="0" style="width:700px; margin:0 auto;">
+	<tr>
+    	<td style="padding:15px 40px;">
+            <table cellpadding="0" cellspacing="0" border="0" width="100%">               
+                <tr>
+                    <td valign="top" bgcolor="#ffffff" style="padding:7px 36px; border-radius:10px; border:1px solid #a8c4f7;  font-family:맑은 고딕, sans-serif;">
+                        <table cellpadding="0" cellspacing="0" border="0" width="100%" bgcolor="#ffffff">            	            
+                            <tr>                	
+                                <td>
+	                                <table cellpadding="0" cellspacing="0" border="0" width="100%">                                   
+	                                    <tr>
+	                                        <td style="padding:60px 0 0; font-size:14px; -webkit-text-size-adjust:none; word-break:break-word; font-family:맑은 고딕, sans-serif; line-height:1.5; color:#515358;">
+	                                           	${sender}님이 문서를 공유 하였습니다.
+	                                        </td>
+	                                    </tr>
+	                                    <tr>
+	                                        <td style="padding:20px 0 0; font-size:14px; -webkit-text-size-adjust:none; word-break:break-word; font-family:맑은 고딕, sans-serif; line-height:1.5; color:#515358;">
+	                                           	${msg}
+	                                        </td>
+	                                    </tr>
+	                                    <tr>
+	                                        <td style="padding:20px 0 20px; border-bottom:1px solid #ececec;">
+	                                            <a target="_blank" href="${startAppUrl}" style="font-size:16px; -webkit-text-size-adjust:none; word-break:break-word; font-family:맑은 고딕, sans-serif; line-height:1.5; text-decoration:none; color:#0046b9;">${fileName}</a>
+	                                        </td>
+	                                    </tr>
+	                                    <tr>
+	                            	       <td align="center" style="padding:20px 0 20px; border-bottom:1px solid #ececec;">
+	                                        <!-- 버튼 -->                                     
+	                                            <table cellpadding="0" cellspacing="0" border="0" height="42">
+	                                                <tr>
+	                                                    <td bgcolor="#3979ec" align="center" style="padding:0 57px; border-radius:5px; height:42px;"><a target="_blank" href="${startAppUrl}" style="color:#fff; text-decoration:none; display:block; padding:11px 0 10px; font-size:14px; -webkit-text-size-adjust:none; word-break:break-word; font-family:맑은 고딕, sens-serif; ">문서 열기</a></td>
+	                                                </tr>
+	                                            </table>
+	                                            <!-- // 버튼 끝 -->
+	                                        </td>
+	                                    </tr>
+	                                    <tr>
+		                                    <td align="right" style="padding:20px 0 0px; ">	                        		
+				                        			<a href="http://docs.iwest.co.kr/common/doc/W-Docs-Manual.pdf" target="_blank" style="font-size:13px;font-size:14px; -webkit-text-size-adjust:none; word-break:break-word; font-family:맑은 고딕, sans-serif; line-height:1.5; color:#515358;text-decoration:none;">간편 매뉴얼</a>
+				                        	</td>
+				                        </tr>
+				                        <tr>
+		                                    <td align="right" style="padding:5px 0 20px; ">	        
+				                        			<a href="http://docs.iwest.co.kr/app/download/PolarisOfficeSetup_IWEST_W-Docs.exe" target="_blank" style="font-size:13px;font-size:14px; -webkit-text-size-adjust:none; word-break:break-word; font-family:맑은 고딕, sans-serif; line-height:1.5; color:#515358;text-decoration:none;">오피스 다운로드</a>
+											</td>
+			                        	</tr>    
+	                                </table>
+                           		</td>  
+                        	</tr>
+                        </table>
+                    </td>
+                </tr>
+            </table>
+        </td>
+    </tr>
+</table>
+</body>
+</html>

@@ -1,0 +1,10 @@
+package com.polarisoffice.support.mornitoring;
+
+import javax.annotation.Resource;
+
+public class MornitoringController {
+	
+	@Resource(name="mornitoringService")
+    private MornitoringService mornitoringService;
+	
+}

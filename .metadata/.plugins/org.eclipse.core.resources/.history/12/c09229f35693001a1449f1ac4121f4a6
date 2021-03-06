@@ -1,0 +1,39 @@
+package com.polarisoffice.support.wp.notify;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.rest.webmvc.BasePathAwareController;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
+
+@BasePathAwareController
+public class NotifyController {
+
+	private @Autowired NotifyService notifyService;
+
+	@RequestMapping( value = "/notify", method = {
+			RequestMethod.GET, RequestMethod.POST, RequestMethod.OPTIONS
+	} )
+	public @ResponseBody NotifyResponse sendMail(
+		@RequestParam( "command" ) final String command,
+		@RequestParam( "kind" ) final String kind,
+		@RequestParam( "sender" ) final String sender,
+		@RequestParam( "receiver" ) final String receiver,
+		@RequestParam( "docLink" ) final String docLink,
+		@RequestParam( "fileName" ) final String fileName,
+		@RequestParam( "linkmsg" ) final String linkmsg,
+		@RequestParam( "fileType" ) final String fileType) throws Exception {
+
+		if ( "MAIL".equals( kind ) ) {
+			return this.notifyService.sendMail( sender, receiver, docLink, fileName, linkmsg );
+		} else if ( "SMS".equals( kind ) ) {
+			return this.notifyService.sendSms( sender, receiver, fileName );
+		} else if ( "MSG".equals( kind ) ) {
+			return this.notifyService.sendMessage( sender, receiver, docLink, fileName );
+		} else {
+			throw new Exception( kind );
+		}
+	}
+
+}

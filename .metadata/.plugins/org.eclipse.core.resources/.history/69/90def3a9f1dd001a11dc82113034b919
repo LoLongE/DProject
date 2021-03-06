@@ -1,0 +1,28 @@
+package com.polarisoffice.support.mornitoring;
+
+import org.springframework.stereotype.Service;
+
+@Service
+public class MornitoringServiceImpl implements MornitoringService {
+
+	@Override
+	public void getWasMornitoringInfo throws Exception {
+		
+	}
+	
+	@Override
+	public void getWebMornitoringInfo throws Exception {
+		
+	}
+	
+	@Override
+	public void getRedisMornitoringInfo throws Exception {
+		
+	}
+	
+	@Override
+	public void getMemcachedMornitoringInfo throws Exception {
+		
+	}
+	
+}

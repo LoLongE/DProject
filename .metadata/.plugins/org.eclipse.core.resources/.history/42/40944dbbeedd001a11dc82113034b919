@@ -1,0 +1,19 @@
+package com.polarisoffice.support.mornitoring;
+
+import java.util.HashMap;
+import java.util.Map;
+
+public class Mornitoring {
+
+	public Map execCommand() {
+		Map<Integer, String> map = new HashMap<>();
+		ProcessBuilder processBuilder = new ProcessBuilder();
+		processBuilder.redirectErrorStream(true);
+		Process process = null;
+		try {
+			process = processBuilder.start();
+		} catch (Exception e) {
+			// TODO: handle exception
+		}
+	}
+}
