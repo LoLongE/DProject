@@ -22,7 +22,7 @@ public class DynamoDBConfiguration {
 		return AmazonDynamoDBClientBuilder
 				.standard()
 				.withEndpointConfiguration(new AwsClientBuilder.EndpointConfiguration("dynamodb.ap-northeast-2.amazonaws.com", "ap-northeast-2"))
-				.withCredentials(new AWSStaticCredentialsProvider(new BasicAWSCredentials("","")))
+				.withCredentials(new AWSStaticCredentialsProvider(new BasicAWSCredentials("1","1")))
 				.build();
 	}
 }
